@@ -9,6 +9,7 @@ from gpiozero import InputDevice, OutputDevice, PWMOutputDevice
 import subprocess
 import sys
 import os
+import time
 import time as my_time
 from time import sleep
 import subprocess
@@ -25,7 +26,14 @@ button_pin = 16
 GPIO.setup(button_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 button_pin1 = 12
 GPIO.setup(button_pin1, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+button_pin2 = 3
+GPIO.setup(button_pin2, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+GPIO_TRIGGER = 4
+GPIO_ECHO = 17
 
+#set GPIO direction (IN / OUT)
+GPIO.setup(GPIO_TRIGGER, GPIO.OUT)
+GPIO.setup(GPIO_ECHO, GPIO.IN)
 
 def run_command(command):
     if sys.version_info[0] < 3 or (sys.version_info[0] == 3 and sys.version_info[1] < 5):
@@ -95,6 +103,7 @@ def rfidReader():
         vibration = calculate_vibration(0)
         motor.value = vibration
         print(message)
+        flush=True
         engine.say(message)
         engine.runAndWait()
         # If the room is associated with a turn direction, say the direction
@@ -144,11 +153,52 @@ def button_callback1(channel):
     if not GPIO.input(button_pin1):
         print("Button pressed")
         distance = get_distance()
-        print("Distance: {} cm".format(distance))
         engine.say("Distance: " + format(distance))
         engine.runAndWait()
 GPIO.add_event_detect(button_pin1, GPIO.FALLING, callback=button_callback1, bouncetime=300)
 
+def get_obstacle():
+    # set Trigger to HIGH
+    GPIO.output(GPIO_TRIGGER, True)
+
+    # set Trigger after 0.01ms to LOW
+    time.sleep(0.00001)
+    GPIO.output(GPIO_TRIGGER, False)
+
+    StartTime = time.time()
+    StopTime = time.time()
+
+    # save StartTime
+    while GPIO.input(GPIO_ECHO) == 0:
+        StartTime = time.time()
+
+    # save time of arrival
+    while GPIO.input(GPIO_ECHO) == 1:
+        StopTime = time.time()
+
+  # time difference between start and arrival
+    TimeElapsed = StopTime - StartTime
+    # multiply with the sonic speed (34300 cm/s)
+    # and divide by 2, because there and back
+    obstacle = (TimeElapsed * 34300) / 2
+    return obstacle
+
+# Function to handle button press for getting the distance
+def button_callback2(channel):
+    if not GPIO.input(button_pin2):
+        print("Button pressed")
+        obstacle = get_obstacle()
+        print (obstacle)
+        if(obstacle < 10):
+            obstacle = ("Obstacle Ahead")
+            engine.say(obstacle)
+            engine.runAndWait()
+        else:
+            obstacle = ("Coast is Clear")
+            engine.say(obstacle)
+            engine.runAndWait()
+
+GPIO.add_event_detect(button_pin2, GPIO.FALLING, callback=button_callback2, bouncetime=300)
 
 # Keep the program running forever
 while True:

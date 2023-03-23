@@ -1,45 +1,76 @@
-import EddystoneBeaconScanner from '@abandonware/eddystone-beacon-scanner'
+import EddystoneBeaconScanner from '@abandonware/eddystone-beacon-scanner';
+import { spawn } from 'child_process';
 
 const filters = [
-  'fbe2f9bfa973'  // Put your second microbit ID in this string
-]
+    'fbe2f9bfa973',  // Put your first microbit ID in this string
+    'f13efda77196',
+    'fc4b7d58f441'  // Put your third microbit ID in this string
+];
 
 const thresholds = {
   close: 25,
   medium: 50,
-  far: Infinity
+  far: Infinity,
+};
+
+let currentMicrobitIndex = 0;
+let distances = [null, null];
+
+function runPythonProcess() {
+  const pythonProcess = spawn('python3', ['/home/pi/groupProject/main.py']);
+
+  pythonProcess.stdout.on('data', (data) => {
+    console.log(`ID is: ${data}`);
+    if (parseInt(data) === 584189697976) {
+      currentMicrobitIndex++;
+      distances = [null, null];
+      console.log(`Moving to microbit ${currentMicrobitIndex + 1}`);
+    } else if (parseInt(data) === 584189995784) {
+      currentMicrobitIndex = 2;
+      distances = [null, null, null];
+      console.log(`Moving to microbit ${currentMicrobitIndex + 1}`);
+    }
+  });
+
+  pythonProcess.stderr.on('data', (data) => {
+    console.error(`Error from Python: ${data}`);
+  });
+
+  pythonProcess.on('close', (code) => {
+    console.log(`Python process exited with code ${code}`);
+    runPythonProcess(); // spawn a new child process
+  });
+
+  // Send data to Python process
+  pythonProcess.stdin.write('Hello from Node.js!');
+  pythonProcess.stdin.end();
 }
 
-let currentMicrobitIndex = 0
-let distances = [null, null]
-
 EddystoneBeaconScanner.on('updated', (beacon) => {
-  if (!filters.includes(beacon.id)) return
- 
-  const distance = Math.trunc(beacon.distance * 10)
+  if (!filters.includes(beacon.id)) return;
+
+
+  const distance = Math.trunc(beacon.distance * 10);
 
   if (beacon.id === filters[currentMicrobitIndex]) {
-    distances[currentMicrobitIndex] = distance
-    const distanceText = getDistanceText(distance)
-    console.log(`Microbit ${currentMicrobitIndex + 1} distance: ${distanceText}`)
-   
+    distances[currentMicrobitIndex] = distance;
+    const distanceText = getDistanceText(distance);
+    console.log(`Microbit ${currentMicrobitIndex + 1} distance: ${distanceText}`);
+
     if (distance === 0) {
-      currentMicrobitIndex++
-    }
-   
-    if (currentMicrobitIndex >= filters.length) {
-      console.log('You have arrived!')
-      EddystoneBeaconScanner.stopScanning()
+      console.log(`Reached microbit ${currentMicrobitIndex + 1}`);
+      runPythonProcess();
     }
   }
-})
+});
 
 function getDistanceText(distance) {
   for (const [text, threshold] of Object.entries(thresholds)) {
     if (distance <= threshold) {
-      return text
+      return text;
     }
   }
 }
 
-EddystoneBeaconScanner.startScanning(true)
+runPythonProcess(); // start the first child process
+EddystoneBeaconScanner.startScanning(true);

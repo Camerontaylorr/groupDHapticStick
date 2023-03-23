@@ -13,8 +13,6 @@ try:
         id, text = reader.read()
         id = reader.read_id()
         print(id)
-       # engine.say("You are in " + text)
-        print("You are in " + text)
-       # engine.runAndWait()
+        print(id, flush=true)
 finally:
         GPIO.cleanup()
