@@ -21,15 +21,16 @@ motor = PWMOutputDevice(21)
 # Set up GPIO pin numbering
 GPIO.setmode(GPIO.BCM)
 
+
 # Set up pin 16 as an input pin with a pull-up resistor
 button_pin = 16
 GPIO.setup(button_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-button_pin1 = 12
+button_pin1 = 17
 GPIO.setup(button_pin1, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-button_pin2 = 3
+button_pin2 = 12
 GPIO.setup(button_pin2, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 GPIO_TRIGGER = 4
-GPIO_ECHO = 17
+GPIO_ECHO = 14
 
 #set GPIO direction (IN / OUT)
 GPIO.setup(GPIO_TRIGGER, GPIO.OUT)
@@ -51,6 +52,9 @@ def run_command(command):
 reader = SimpleMFRC522()
 
 #variable for saying the distance just once
+beacon_a = 999
+beacon_b = 999
+beacon_c = 999
 last_distance = ""
 
 # Define a dictionary that maps RFID tag IDs to room names
@@ -84,15 +88,24 @@ def calculate_vibration(time):
     else:
         return ((t - 0.02) / 3.98)
 
+last_id = None
 # Function to read the RFID tag
 def rfidReader():
     global last_tag_text
+    global last_id
 
-    id, text = reader.read()
+    id = reader.read_id_no_block()
+    if id == last_id:
+        return
+    print("SCAN: " + str(id) + " -- previously: " + str(last_id))
+    last_id = id
+    if not id:
+        return
 
     if id in room_names:
         # If the RFID tag is recognized, store the corresponding room name in last_tag_text
         room_name = room_names[id]
+        print(id, flush=True)
         last_tag_text = room_name
         message = "You are in " + room_name
 
@@ -103,7 +116,6 @@ def rfidReader():
         vibration = calculate_vibration(0)
         motor.value = vibration
         print(message)
-        flush=True
         engine.say(message)
         engine.runAndWait()
         # If the room is associated with a turn direction, say the direction
@@ -137,23 +149,22 @@ def button_callback(channel):
 # Add event listener to detect button press
 GPIO.add_event_detect(button_pin, GPIO.FALLING, callback=button_callback, bouncetime=300)
 
+# TODO: Work out what to say based on the known beacon distances
 def get_distance():
-    # Run the scan and extract the distance from the output
-    for line in run_command(['node', 'scan.mjs']):
-        if line is None or line == "":
-            #print('...waiting...')
-            sleep(.250)
-        else:
-            print('READ: ' + line)
-            distance = str(line.strip())
-            return distance
+    if beacon_a < beacon_b and beacon_a < beacon_c:
+        return "Beacon A is " + str(beacon_a) + " metres away"
+    if beacon_b < beacon_a and beacon_b < beacon_c:
+        return "Beacon B is " + str(beacon_a) + " metres away"
+    if beacon_c < beacon_a and beacon_c < beacon_b:
+        return "Beacon C is " + str(beacon_a) + " metres away"
+    return "You are not near any beacons"
 
 # Function to handle button press for getting the distance
 def button_callback1(channel):
     if not GPIO.input(button_pin1):
         print("Button pressed")
         distance = get_distance()
-        engine.say("Distance: " + format(distance))
+        engine.say(distance)
         engine.runAndWait()
 GPIO.add_event_detect(button_pin1, GPIO.FALLING, callback=button_callback1, bouncetime=300)
 
@@ -186,7 +197,7 @@ def get_obstacle():
 # Function to handle button press for getting the distance
 def button_callback2(channel):
     if not GPIO.input(button_pin2):
-        print("Button pressed")
+        print("Button pressed 6")
         obstacle = get_obstacle()
         print (obstacle)
         if(obstacle < 10):
@@ -200,7 +211,26 @@ def button_callback2(channel):
 
 GPIO.add_event_detect(button_pin2, GPIO.FALLING, callback=button_callback2, bouncetime=300)
 
-# Keep the program running forever
-while True:
+# Run the scan and extract the distance from the output
+for line in run_command(['node', 'scan.mjs']):
+    if line is None or line == "":
+        print('...waiting...')
+        sleep(.250)
+    else:
+        print('READ: ' + line)
+        parts = line.strip().split(',')
+        beacon = parts[0]
+        distance = float(parts[1])
+        if beacon == "fbe2f9bfa973":
+            beacon_a = distance
+            print('BEACON-A: ' + beacon + ' at ' + str(distance) + 'm')
+        elif beacon == "f13efda77196":
+            beacon_b = distance
+            print('BEACON-B: ' + beacon + ' at ' + str(distance) + 'm')
+        elif beacon == "???":
+            beacon_c = distance
+            print('BEACON-C: ' + beacon + ' at ' + str(distance) + 'm')
+        else:
+            #print('BEACON-?: ' + beacon + ' at ' + str(distance) + 'm')
+            pass
     rfidReader()
-    my_time.sleep(1.0)
