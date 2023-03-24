@@ -52,33 +52,36 @@ def run_command(command):
 reader = SimpleMFRC522()
 
 #variable for saying the distance just once
-beacon_a = 999
-beacon_b = 999
-beacon_c = 999
+beacon_a = 9999
+beacon_b = 9999
+beacon_c = 9999
+print (float(beacon_a))
 last_distance = ""
 
 # Define a dictionary that maps RFID tag IDs to room names
 room_names = {
-    584189697976: "Room 1",
-    584190220710: "Room 2",
-    584189710965: "Room 3",
-    584189995784: "Room 4",
-    584185988475: "Room 5",
-    584192553704: "Room 7",
-    584189712240: "Room 8",
-    584189996047: "Room 9",
+    584189697976: "Main Entrance",
+    584190220710: "Discussion Area",
+    584189710965: "Toilet",
+    584189995784: "Teaching Room",
+    584185988475: "Pantry",
+    584192553704: "Pantry",
+    584189712240: "Bobs Room",
+    584189996047: "Pantry",
+    584192554222: "Main Entrance",
+    584183290140: "Pantry"
 }
 
 # Define a dictionary that maps RFID tag IDs to turn directions
 directions = {
-    584192554222: "Left",
-    584183290140: "Right"
+    #584183290140: "Right"
 }
 
 # Global variable to store the text of the last scanned RFID tag
 last_tag_text = ""
 last_room_name = "" # Initialize the last room name to an empty string
-
+room1 = False
+room2 = False
 # Function to calculate the vibration level based on time
 def calculate_vibration(time):
     if time <= 0:
@@ -93,6 +96,7 @@ last_id = None
 def rfidReader():
     global last_tag_text
     global last_id
+    global room1
 
     id = reader.read_id_no_block()
     if id == last_id:
@@ -125,6 +129,8 @@ def rfidReader():
         engine.say("Turn " + directions[id])
         engine.runAndWait()
 
+    if (room_name == "Bobs Room"):
+        room1 = True;
 # Function to handle button press
 def button_callback(channel):
     global last_tag_text, last_room_name
@@ -151,10 +157,24 @@ GPIO.add_event_detect(button_pin, GPIO.FALLING, callback=button_callback, bounce
 
 # TODO: Work out what to say based on the known beacon distances
 def get_distance():
-    if beacon_a < beacon_b and beacon_a < beacon_c:
-        return "Beacon A is " + str(beacon_a) + " metres away"
-    if beacon_b < beacon_a and beacon_b < beacon_c:
-        return "Beacon B is " + str(beacon_a) + " metres away"
+    distance1 = round(float(beacon_a)*100)
+    distance2 = round(float(beacon_b)*100)
+    if (room1 == False):
+        if distance1 < 50:
+            return "Pantry is close"
+        elif distance1 < 100:
+            return "Pantry is at a medium distance"
+        elif distance1 > 100:
+            return "Pantry is far away"
+
+    if (room1 == True and room2 == False):
+        if distance2 < 50:
+            return "Bobs room is close"
+        elif distance2 < 100:
+            return "Bobs room is at a medium distance"
+        elif distance2 > 100:
+            return "Bobs room is far away"
+
     if beacon_c < beacon_a and beacon_c < beacon_b:
         return "Beacon C is " + str(beacon_a) + " metres away"
     return "You are not near any beacons"
@@ -162,7 +182,8 @@ def get_distance():
 # Function to handle button press for getting the distance
 def button_callback1(channel):
     if not GPIO.input(button_pin1):
-        print("Button pressed")
+        print("Button pressed 2")
+        print("close")
         distance = get_distance()
         engine.say(distance)
         engine.runAndWait()
@@ -223,7 +244,7 @@ for line in run_command(['node', 'scan.mjs']):
         distance = float(parts[1])
         if beacon == "fbe2f9bfa973":
             beacon_a = distance
-            print('BEACON-A: ' + beacon + ' at ' + str(distance) + 'm')
+            print('BEACON-A: ' + beacon + ' at ' + str(round(float(beacon_a)*100)) + 'cm')
         elif beacon == "f13efda77196":
             beacon_b = distance
             print('BEACON-B: ' + beacon + ' at ' + str(distance) + 'm')
@@ -233,4 +254,5 @@ for line in run_command(['node', 'scan.mjs']):
         else:
             #print('BEACON-?: ' + beacon + ' at ' + str(distance) + 'm')
             pass
+    print(room1)
     rfidReader()

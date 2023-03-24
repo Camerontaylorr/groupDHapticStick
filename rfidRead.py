@@ -13,6 +13,6 @@ try:
         id, text = reader.read()
         id = reader.read_id()
         print(id)
-        print(id, flush=true)
+        print(id)
 finally:
         GPIO.cleanup()
