@@ -1,5 +1,5 @@
 # groupDHapticStick
-The navicane is a white cane modified with variety of sensors to help with visually impaired indoor navigation. The Navicane makes use of a Raspberry Pi 4B, 3 BBC Microbits and RFID scanner along with NFC tags.
+The Navicane is a white cane modified with variety of sensors to help with visually impaired indoor navigation. The Navicane makes use of a Raspberry Pi 4B, 3 BBC Microbits and RFID scanner along with NFC tags.
 
 # General Information
 The Navicane is an innovative assistive technology solution designed to help visually impaired users navigate indoor environments with ease. By utilizing RSSI signals emitted by BBC microbits, the Navicane acts as a guide, directing users towards the appropriate NFC tags that provide information about their current location.
@@ -17,3 +17,4 @@ To enhance the user experience, the Navicane incorporates a variety of sensors t
 # Software Requirements
 
 # Initial Setup
+1 To initalise the Navicane, you will first need to get the eddystone ID from each of the Microbits from the scanforeddystoneID file, which will then be required to be inserted into the scan.MJS file. 
