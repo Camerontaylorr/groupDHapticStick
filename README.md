@@ -15,6 +15,19 @@ To enhance the user experience, the Navicane incorporates a variety of sensors t
 * 1x Vibration Motor 
 
 # Software Requirements
+* Python for main code and RFID reading
+* Javascript for scanning for eddystone beacons 
+
+# Libaraies and Modules
+* RPi. GPIO
+* mfrc522
+* pyttsx3 
+* gpiozero
+* subprocess
+* sys
+* os 
+* time
+* sleep
 
 # Initial Setup
 1. To initalise the Navicane, you will first need to get the eddystone ID from each of the Microbits from the scanforeddystoneID file, which will then be required to be inserted into the scan.MJS file. 
