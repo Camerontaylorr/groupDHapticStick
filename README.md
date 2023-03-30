@@ -17,4 +17,14 @@ To enhance the user experience, the Navicane incorporates a variety of sensors t
 # Software Requirements
 
 # Initial Setup
-1 To initalise the Navicane, you will first need to get the eddystone ID from each of the Microbits from the scanforeddystoneID file, which will then be required to be inserted into the scan.MJS file. 
+1. To initalise the Navicane, you will first need to get the eddystone ID from each of the Microbits from the scanforeddystoneID file, which will then be required to be inserted into the scan.MJS file. 
+2. Once these IDs have been inputted you must then get the apprioate ID's from the NFC tags, from the readRFID.py file and insert them into the Array at the start of the main.py file and give them names to your choosing 
+
+# Using the Cane
+Once the inital set up has been complete you can then start using the Navicane.
+1. Place the microbits and NFC tags in your desired locations
+2. Press the second button to get an approximate distance of either "close", "medium" or "far away" of the microbit
+3. Keep walking towards the Microbit pressing the button when you deem neccessary
+4. Press the top button to check if there are any obsctacles in your way
+5. Once you arrive at NFC tag you will be informed that you are in whatever name you decided for the ID
+6. Once you arrive the last NFC tag you will be informed that you have arrived
