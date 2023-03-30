@@ -19,6 +19,7 @@ To enhance the user experience, the Navicane incorporates a variety of sensors t
 * Javascript for scanning for eddystone beacons 
 
 # Libaraies and Modules
+For Python
 * RPi. GPIO
 * mfrc522
 * pyttsx3 
